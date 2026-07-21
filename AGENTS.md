@@ -19,6 +19,13 @@ Ton travail sur chaque demande, dans cet ordre :
 6. Lancer les checks disponibles (typecheck, lint, build).
 7. Donner les étapes exactes de test/vérification manuelle.
 
+**Workflow git — une PR par feature, review Greptile obligatoire :**
+1. Créer une branche `feat/<nn>-<slug>` (jamais de commit direct sur `main`).
+2. Implémenter, committer, pousser, ouvrir une PR (`gh pr create`) qui référence le fichier prompt.
+3. Attendre la review de Greptile sur la PR.
+4. Corriger tous les points soulevés, pousser, attendre la re-review — itérer jusqu'à ce que tout soit correct.
+5. Merger seulement quand Greptile n'a plus d'objection et que l'utilisateur valide.
+
 Référence Next.js : lire les guides dans `node_modules/next/dist/docs/` pour les patterns du framework (voir bloc en tête de fichier).
 
 ## 2. Le produit

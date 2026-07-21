@@ -22,6 +22,38 @@ export type Student = {
   status: StudentStatus;
 };
 
+export type ColorPalette = {
+  id: string;
+  name: string;
+  primary: string;
+  secondary: string;
+};
+
+export type ConfiguratorAnswers = {
+  target: string;
+  channelName: string;
+  colors: {
+    paletteId: string | null;
+    primary: string;
+    secondary: string;
+  };
+  avatar: {
+    description: string;
+    styles: string[];
+  };
+  banner: {
+    description: string;
+    styles: string[];
+  };
+};
+
+export type NicheContent = {
+  targetExamples: string[];
+  palettes: ColorPalette[];
+  avatarStyles: string[];
+  bannerStyles: string[];
+};
+
 export type License = {
   id: string;
   key: string;
