@@ -8,7 +8,8 @@ export default async function AdminLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const user = await currentUser();
-  if (user?.publicMetadata?.role !== "admin") redirect("/dashboard");
+  if (!user) redirect("/sign-in");
+  if (user.publicMetadata?.role !== "admin") redirect("/dashboard");
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="flex h-14 items-center justify-between border-b border-border bg-surface px-4">
