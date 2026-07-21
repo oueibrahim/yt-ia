@@ -1,10 +1,27 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { currentUser } from "@clerk/nextjs/server";
 import { Badge, Card, CardTitle } from "@/components/ui";
-import {
-  licenseDaysRemaining,
-  mockLicense,
-  mockStudent,
-} from "@/lib/mock/data";
+import { getActiveLicense, licenseDaysRemaining } from "@/lib/db/licenses";
+import { getStudentByClerkId } from "@/lib/db/students";
+import type { StudentStatus } from "@/lib/db/types";
+
+const statusLabels: Record<StudentStatus, string> = {
+  active: "Licence active",
+  pending_license: "Licence en attente d'activation",
+  expired: "Licence expirée",
+  suspended: "Compte suspendu",
+};
+
+const statusBadgeVariants: Record<
+  StudentStatus,
+  "active" | "pending" | "expired" | "suspended"
+> = {
+  active: "active",
+  pending_license: "pending",
+  expired: "expired",
+  suspended: "suspended",
+};
 
 const shortcuts = [
   {
@@ -29,18 +46,30 @@ const shortcuts = [
   },
 ];
 
-export default function DashboardPage() {
-  const daysRemaining = licenseDaysRemaining(mockLicense);
+export default async function DashboardPage() {
+  const user = await currentUser();
+  if (!user) redirect("/sign-in");
+
+  const student = await getStudentByClerkId(user.id);
+  if (!student) redirect("/sign-in");
+
+  const license = await getActiveLicense(student.id);
+  const daysRemaining = license ? licenseDaysRemaining(license) : null;
+  const greetingName = user.firstName ?? student.email.split("@")[0];
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-8">
       <header className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold">Bonjour {mockStudent.firstName} 👋</h1>
+        <h1 className="text-3xl font-bold">Bonjour {greetingName} 👋</h1>
         <div className="flex items-center gap-3">
-          <Badge variant="active">Licence active</Badge>
-          <span className="text-sm text-fg-muted">
-            Expire dans {daysRemaining} jour{daysRemaining > 1 ? "s" : ""}
-          </span>
+          <Badge variant={statusBadgeVariants[student.status]}>
+            {statusLabels[student.status]}
+          </Badge>
+          {daysRemaining !== null && (
+            <span className="text-sm text-fg-muted">
+              Expire dans {daysRemaining} jour{daysRemaining > 1 ? "s" : ""}
+            </span>
+          )}
         </div>
       </header>
 

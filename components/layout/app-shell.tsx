@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { SignOutButton } from "@clerk/nextjs";
 import { Badge } from "@/components/ui";
 import { cn } from "@/lib/utils";
+import type { StudentStatus } from "@/lib/db/types";
 
 type NavItem = {
   label: string;
@@ -20,8 +21,26 @@ const navItems: NavItem[] = [
 ];
 
 type AppShellProps = {
-  licenseDaysRemaining: number;
+  licenseStatus: StudentStatus;
+  licenseDaysRemaining: number | null;
   children: React.ReactNode;
+};
+
+const statusLabels: Record<StudentStatus, string> = {
+  active: "Actif",
+  pending_license: "En attente",
+  expired: "Expiré",
+  suspended: "Suspendu",
+};
+
+const statusBadgeVariants: Record<
+  StudentStatus,
+  "active" | "pending" | "expired" | "suspended"
+> = {
+  active: "active",
+  pending_license: "pending",
+  expired: "expired",
+  suspended: "suspended",
 };
 
 function NavLinks({
@@ -55,22 +74,35 @@ function NavLinks({
   );
 }
 
-function LicenseStatus({ daysRemaining }: { daysRemaining: number }) {
+function LicenseStatus({
+  status,
+  daysRemaining,
+}: {
+  status: StudentStatus;
+  daysRemaining: number | null;
+}) {
   return (
     <div className="flex flex-col gap-2 rounded-md border border-border bg-surface p-3">
       <div className="flex items-center justify-between">
         <span className="text-xs text-fg-muted">Licence</span>
-        <Badge variant="active">Actif</Badge>
+        <Badge variant={statusBadgeVariants[status]}>
+          {statusLabels[status]}
+        </Badge>
       </div>
       <p className="text-xs text-fg-subtle">
-        {daysRemaining} jour{daysRemaining > 1 ? "s" : ""} restant
-        {daysRemaining > 1 ? "s" : ""}
+        {daysRemaining === null
+          ? "Aucune licence active"
+          : `${daysRemaining} jour${daysRemaining > 1 ? "s" : ""} restant${daysRemaining > 1 ? "s" : ""}`}
       </p>
     </div>
   );
 }
 
-export function AppShell({ licenseDaysRemaining, children }: AppShellProps) {
+export function AppShell({
+  licenseStatus,
+  licenseDaysRemaining,
+  children,
+}: AppShellProps) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -85,7 +117,10 @@ export function AppShell({ licenseDaysRemaining, children }: AppShellProps) {
           <NavLinks pathname={pathname} />
         </div>
         <div className="flex flex-col gap-3">
-          <LicenseStatus daysRemaining={licenseDaysRemaining} />
+          <LicenseStatus
+            status={licenseStatus}
+            daysRemaining={licenseDaysRemaining}
+          />
           <SignOutButton redirectUrl="/sign-in">
             <button
               type="button"
@@ -117,7 +152,10 @@ export function AppShell({ licenseDaysRemaining, children }: AppShellProps) {
       {menuOpen && (
         <div className="fixed inset-x-0 top-14 z-10 flex flex-col gap-4 border-b border-border bg-surface p-4 lg:hidden">
           <NavLinks pathname={pathname} onNavigate={() => setMenuOpen(false)} />
-          <LicenseStatus daysRemaining={licenseDaysRemaining} />
+          <LicenseStatus
+            status={licenseStatus}
+            daysRemaining={licenseDaysRemaining}
+          />
         </div>
       )}
 
