@@ -54,6 +54,23 @@ export type NicheContent = {
   bannerStyles: string[];
 };
 
+export type CommandKind = "script" | "short";
+
+export type Conversation = {
+  id: string;
+  title: string;
+  createdAt: string;
+};
+
+export type Message = {
+  id: string;
+  conversationId: string;
+  role: "user" | "assistant";
+  command: CommandKind | null;
+  content: string;
+  createdAt: string;
+};
+
 export type License = {
   id: string;
   key: string;
