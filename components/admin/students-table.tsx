@@ -28,6 +28,7 @@ const dateFormatter = new Intl.DateTimeFormat("fr-FR", {
   month: "short",
   hour: "2-digit",
   minute: "2-digit",
+  timeZone: "Europe/Paris",
 });
 
 function StudentActions({ status }: { status: StudentStatus }) {
@@ -63,14 +64,15 @@ export function StudentsTable({ students, monthlyQuota }: StudentsTableProps) {
       {/* Desktop table */}
       <div className="hidden overflow-x-auto rounded-lg border border-border bg-surface md:block">
         <table className="w-full text-sm">
+          <caption className="sr-only">Liste des élèves de la formation</caption>
           <thead>
             <tr className="border-b border-border text-left text-xs text-fg-subtle uppercase">
-              <th className="px-4 py-3 font-medium">Élève</th>
-              <th className="px-4 py-3 font-medium">Statut</th>
-              <th className="px-4 py-3 font-medium">Configurateur</th>
-              <th className="px-4 py-3 font-medium">Dernière activité</th>
-              <th className="px-4 py-3 font-medium">Conso</th>
-              <th className="px-4 py-3 font-medium">Actions</th>
+              <th scope="col" className="px-4 py-3 font-medium">Élève</th>
+              <th scope="col" className="px-4 py-3 font-medium">Statut</th>
+              <th scope="col" className="px-4 py-3 font-medium">Configurateur</th>
+              <th scope="col" className="px-4 py-3 font-medium">Dernière activité</th>
+              <th scope="col" className="px-4 py-3 font-medium">Conso</th>
+              <th scope="col" className="px-4 py-3 font-medium">Actions</th>
             </tr>
           </thead>
           <tbody>
