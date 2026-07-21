@@ -71,6 +71,16 @@ export type Message = {
   createdAt: string;
 };
 
+export type AdminStudentRow = {
+  id: string;
+  name: string;
+  email: string;
+  status: StudentStatus;
+  configuratorStep: string;
+  lastActivity: string;
+  messagesUsed: number;
+};
+
 export type License = {
   id: string;
   key: string;
