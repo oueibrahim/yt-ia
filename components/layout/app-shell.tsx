@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { SignOutButton } from "@clerk/nextjs";
 import { Badge } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
@@ -85,12 +86,14 @@ export function AppShell({ licenseDaysRemaining, children }: AppShellProps) {
         </div>
         <div className="flex flex-col gap-3">
           <LicenseStatus daysRemaining={licenseDaysRemaining} />
-          <button
-            type="button"
-            className="rounded-md px-3 py-2 text-left text-sm text-fg-subtle transition-colors hover:bg-surface-raised hover:text-fg"
-          >
-            Déconnexion
-          </button>
+          <SignOutButton redirectUrl="/sign-in">
+            <button
+              type="button"
+              className="rounded-md px-3 py-2 text-left text-sm text-fg-subtle transition-colors hover:bg-surface-raised hover:text-fg"
+            >
+              Déconnexion
+            </button>
+          </SignOutButton>
         </div>
       </aside>
 
