@@ -78,7 +78,7 @@ Référence de terrain : `docs/reference/prompt-a-chainfit.md` (le Prompt A rée
   - Phrases signature en quantités fixes : 3 ouvertures, 3 relances de rétention, 2 call-to-like, 2 call-to-subscribe, 4 transitions, 3 conclusions
   - 5 structures de scripts longs (Mythe Brisé, Erreurs Fatales, Secret Révélé, Classement/Liste, Transformation) et 5 formats de Shorts (Classement Niveau, Liste Choc, Liste Solution Express, Comparaison Personnalisée, Défi Progressif), adaptés au vocabulaire de la cible
   - Reprise de la description exacte de l'avatar (HEX, style flat vector comic)
-  - ⚠️ L'architecture détaillée vient du **« Guide LAO »** du formateur — document à obtenir, prérequis de l'étape 5 (lib/ai) du plan
+  - Confirmé par le formateur : il n'existe pas de « Guide LAO » séparé — le Prompt A est auto-suffisant et doit être repris **tel quel** comme base du méta-prompt (le LLM invente l'architecture détaillée à chaque génération)
 - Résultat stocké comme `prompt_b_versions` v1, `is_active = true`.
 - Ce prompt devient le system prompt permanent de l'espace de chat. **Aucun copier-coller pour l'élève.**
 

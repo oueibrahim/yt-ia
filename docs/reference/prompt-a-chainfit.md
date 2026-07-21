@@ -5,13 +5,14 @@
 > (couche 1) et ses règles de génération de l'assistant final (couche 2 / Prompt B).
 > Contenu verbatim ci-dessous.
 >
-> ⚠️ « LAO » = L'Homme Athlétique Orange, la chaîne-exemple du formateur. Le « Guide
-> LAO » est le Prompt B complet de cette chaîne (l'assistant LAOBOT rédigé), collé
-> « ci-dessous » dans le document original mais absent de la copie reçue. À récupérer
-> auprès du formateur si possible. À défaut, l'étape 5 du plan (lib/ai) reconstruira
-> un gabarit maître à partir des contraintes listées ici (noms des 5 structures
-> longues, 5 formats Shorts, quantités de phrases signature, 7 commandes, règles
-> absolues), stocké comme donnée de niche et validé par le formateur.
+> ℹ️ « LAO » = L'Homme Athlétique Orange, l'exemple mental utilisé par le formateur
+> pour rédiger ce prompt. Confirmé par le formateur le 21 juillet 2026 : il n'existe
+> AUCUN document « Guide LAO » séparé — le « ci-dessous » est une coquille (pour
+> « ci-dessus »/les règles du prompt lui-même). Le prompt est auto-suffisant : le LLM
+> invente l'architecture détaillée de l'assistant à partir des contraintes listées ici
+> (5 structures longues, 5 formats Shorts, quantités de phrases signature, 7
+> commandes, règles absolues). Le texte doit être conservé TEL QUEL, sans modification
+> — c'est la base du méta-prompt de génération du Prompt B (étape 5 du plan).
 
 ---
 
