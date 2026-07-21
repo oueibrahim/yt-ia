@@ -18,6 +18,22 @@ const clerkAppearance = {
     colorDanger: "#f87171",
     borderRadius: "10px",
   },
+  elements: {
+    socialButtonsBlockButton: {
+      backgroundColor: "#1d1d26",
+      border: "1px solid #2a2a36",
+      color: "#f5f5f7",
+    },
+    socialButtonsBlockButtonText: {
+      color: "#f5f5f7",
+    },
+    dividerLine: {
+      backgroundColor: "#2a2a36",
+    },
+    dividerText: {
+      color: "#a0a0b0",
+    },
+  },
 };
 
 const geistSans = Geist({
