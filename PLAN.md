@@ -61,13 +61,24 @@ Règles de données dures (à reprendre dans AGENTS.md) :
 
 ### Couche 1 — Configurateur (ex Prompt A)
 Machine à états à ordre fixe : **cible → nom de chaîne → couleurs → avatar → bannière**.
-- Chaque réponse sauvegardée immédiatement en base.
-- Retour en arrière possible (édite la réponse, invalide rien d'autre).
-- La niche paramètre le vocabulaire, les exemples de hooks et la palette par défaut affichés.
-- Les étapes avatar/bannière produisent un **prompt d'image en anglais copiable** (MVP), généré à partir des réponses.
+Référence de terrain : `docs/reference/prompt-a-chainfit.md` (le Prompt A réel de la niche Fitness, fourni par le formateur) — le configurateur reproduit son parcours.
+- Chaque réponse sauvegardée immédiatement en base. Retour en arrière possible.
+- **L'IA assiste à l'intérieur des étapes** (appels LLM via `lib/ai/`, logués en usage_events kind=configurator) :
+  - **Cible** : 3 sous-questions (genre, tranche d'âge, douleur principale) → reformulation "avatar marketing" en 2-3 phrases par l'IA, stockée avec la réponse brute
+  - **Nom** : l'IA propose 6 noms (2 identité, 2 promesse/résultat, 2 punchy) avec justification ; l'élève en choisit un ou saisit le sien
+  - **Couleurs** : l'élève saisit ses couleurs OU demande une proposition IA (2 couleurs principales + 1 neutre, HEX, vives et cohérentes avec le nom et la psychologie de la cible)
+  - **Avatar** : l'IA génère **3 prompts d'image en anglais** copiables (cartoon flat vector, contours noirs, couleur HEX de la marque, fond blanc, 3 angles : force/action/pointage caméra)
+  - **Bannière** : affichage des dimensions YouTube officielles (bannière 2560×1440, zone sûre 1546×423, vignette 1280×720, logo 800×800, générique 3-5 s) + **1 prompt de bannière en anglais** copiable
+- La niche paramètre le vocabulaire, les exemples et les critères de génération (données en base).
+- Conséquence sur l'ordre de construction : l'étape 8 « prompt d'image copiable » est absorbée par le configurateur (avatar/bannière) et dépend de `lib/ai/` (étape 5).
 
 ### Couche 2 — Assistant personnalisé (ex Prompt B)
-- À la complétion du configurateur, un **job Trigger.dev** appelle le LLM avec un méta-prompt (réponses de l'élève + données de niche) et génère : persona inventée, tagline, phrases signature, structures de scripts adaptées.
+- À la complétion du configurateur, un **job Trigger.dev** appelle le LLM avec un méta-prompt (réponses de l'élève + données de niche) et génère l'assistant selon les règles du Prompt A de référence :
+  - Nom : `[NOM DE CHAÎNE]BOT` ; persona 100% originale ; tagline inédite
+  - Phrases signature en quantités fixes : 3 ouvertures, 3 relances de rétention, 2 call-to-like, 2 call-to-subscribe, 4 transitions, 3 conclusions
+  - 5 structures de scripts longs (Mythe Brisé, Erreurs Fatales, Secret Révélé, Classement/Liste, Transformation) et 5 formats de Shorts (Classement Niveau, Liste Choc, Liste Solution Express, Comparaison Personnalisée, Défi Progressif), adaptés au vocabulaire de la cible
+  - Reprise de la description exacte de l'avatar (HEX, style flat vector comic)
+  - ⚠️ L'architecture détaillée vient du **« Guide LAO »** du formateur — document à obtenir, prérequis de l'étape 5 (lib/ai) du plan
 - Résultat stocké comme `prompt_b_versions` v1, `is_active = true`.
 - Ce prompt devient le system prompt permanent de l'espace de chat. **Aucun copier-coller pour l'élève.**
 
