@@ -1,21 +1,23 @@
 import "server-only";
 
+import { cache } from "react";
 import { currentUser } from "@clerk/nextjs/server";
 import { getSupabaseServer } from "@/lib/supabase/server";
 import type { StudentRow } from "./types";
 
-export async function getStudentByClerkId(
-  clerkUserId: string,
-): Promise<StudentRow | null> {
-  const supabase = getSupabaseServer();
-  const { data, error } = await supabase
-    .from("students")
-    .select("*")
-    .eq("clerk_user_id", clerkUserId)
-    .maybeSingle();
-  if (error) throw new Error(`getStudentByClerkId failed: ${error.message}`);
-  return data;
-}
+// cache(): deduplicated per request (layout + page share the same fetch)
+export const getStudentByClerkId = cache(
+  async (clerkUserId: string): Promise<StudentRow | null> => {
+    const supabase = getSupabaseServer();
+    const { data, error } = await supabase
+      .from("students")
+      .select("*")
+      .eq("clerk_user_id", clerkUserId)
+      .maybeSingle();
+    if (error) throw new Error(`getStudentByClerkId failed: ${error.message}`);
+    return data;
+  },
+);
 
 // Creates the student row on first visit (status pending_license, default
 // formation = the single seeded one), or returns the existing row.

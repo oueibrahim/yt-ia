@@ -3,25 +3,8 @@ import { redirect } from "next/navigation";
 import { currentUser } from "@clerk/nextjs/server";
 import { Badge, Card, CardTitle } from "@/components/ui";
 import { getActiveLicense, licenseDaysRemaining } from "@/lib/db/licenses";
+import { statusBadgeVariants, statusLongLabels } from "@/lib/db/status";
 import { getStudentByClerkId } from "@/lib/db/students";
-import type { StudentStatus } from "@/lib/db/types";
-
-const statusLabels: Record<StudentStatus, string> = {
-  active: "Licence active",
-  pending_license: "Licence en attente d'activation",
-  expired: "Licence expirée",
-  suspended: "Compte suspendu",
-};
-
-const statusBadgeVariants: Record<
-  StudentStatus,
-  "active" | "pending" | "expired" | "suspended"
-> = {
-  active: "active",
-  pending_license: "pending",
-  expired: "expired",
-  suspended: "suspended",
-};
 
 const shortcuts = [
   {
@@ -63,7 +46,7 @@ export default async function DashboardPage() {
         <h1 className="text-3xl font-bold">Bonjour {greetingName} 👋</h1>
         <div className="flex items-center gap-3">
           <Badge variant={statusBadgeVariants[student.status]}>
-            {statusLabels[student.status]}
+            {statusLongLabels[student.status]}
           </Badge>
           {daysRemaining !== null && (
             <span className="text-sm text-fg-muted">
