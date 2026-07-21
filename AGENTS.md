@@ -19,13 +19,20 @@ Ton travail sur chaque demande, dans cet ordre :
 6. Lancer les checks disponibles (typecheck, lint, build).
 7. Donner les étapes exactes de test/vérification manuelle.
 
+**Workflow git — une PR par feature, review Greptile obligatoire :**
+1. Créer une branche `feat/<nn>-<slug>` (jamais de commit direct sur `main`).
+2. Implémenter, committer, pousser, ouvrir une PR (`gh pr create`) qui référence le fichier prompt.
+3. Attendre la review de Greptile sur la PR.
+4. Corriger tous les points soulevés, pousser, attendre la re-review — itérer jusqu'à ce que tout soit correct.
+5. Merger seulement quand Greptile n'a plus d'objection et que l'utilisateur valide.
+
 Référence Next.js : lire les guides dans `node_modules/next/dist/docs/` pour les patterns du framework (voir bloc en tête de fichier).
 
 ## 2. Le produit
 
 **Nom de travail : la Plateforme.** Un SaaS par abonnement (licences Chariow) pour les élèves de formations YouTube. Il internalise la mécanique actuelle "Prompt A → Prompt B → chat quotidien" en deux couches, sans aucun copier-coller pour l'élève :
 
-- **Couche 1 — Configurateur** : machine à états à ordre fixe (cible → nom de chaîne → couleurs → avatar → bannière), chaque réponse sauvegardée immédiatement en base, retour en arrière possible. La **niche** (Fitness en V1) est un jeu de données en base — vocabulaire, exemples de hooks, palette par défaut, structures de scripts — **jamais du code en dur**.
+- **Couche 1 — Configurateur** : machine à états à ordre fixe (cible → nom de chaîne → couleurs → avatar → bannière), chaque réponse sauvegardée immédiatement en base, retour en arrière possible. L'IA assiste dans les étapes (reformulation de cible, 6 propositions de noms, palette proposée, 3 prompts d'avatar + 1 prompt de bannière en anglais) — parcours de référence : `docs/reference/prompt-a-chainfit.md`, à lire avant de travailler sur le configurateur ou le Prompt B. La **niche** (Fitness en V1) est un jeu de données en base — vocabulaire, exemples de hooks, palette par défaut, structures de scripts — **jamais du code en dur**.
 - **Couche 2 — Assistant personnalisé (Prompt B)** : à la complétion du configurateur, un job Trigger.dev appelle le LLM et génère le system prompt personnalisé de l'élève (persona inventée, tagline, phrases signature, structures de scripts adaptées à la niche). Stocké versionné en base, il devient le contexte permanent de l'espace de chat de l'élève.
 - **Espace de chat** : conversations persistantes avec l'assistant, commandes `/script` et `/short`, streaming, historique des scripts, quota mensuel bloquant.
 - **Panneau admin** (formateur, rôle Clerk `admin`) : liste des élèves (avancement, dernière activité, consommation), suspension/réactivation d'un élève, ajustement du quota d'une formation, prolongation/révocation manuelle de licence.
