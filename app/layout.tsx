@@ -1,6 +1,40 @@
 import type { Metadata } from "next";
+import { ClerkProvider } from "@clerk/nextjs";
+import { frFR } from "@clerk/localizations";
+import { dark } from "@clerk/ui/themes";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+
+const clerkAppearance = {
+  baseTheme: dark,
+  variables: {
+    colorPrimary: "#ff4d2e",
+    colorPrimaryForeground: "#ffffff",
+    colorBackground: "#15151c",
+    colorInput: "#0b0b0f",
+    colorInputForeground: "#f5f5f7",
+    colorForeground: "#f5f5f7",
+    colorMutedForeground: "#a0a0b0",
+    colorDanger: "#f87171",
+    borderRadius: "10px",
+  },
+  elements: {
+    socialButtonsBlockButton: {
+      backgroundColor: "#1d1d26",
+      border: "1px solid #2a2a36",
+      color: "#f5f5f7",
+    },
+    socialButtonsBlockButtonText: {
+      color: "#f5f5f7",
+    },
+    dividerLine: {
+      backgroundColor: "#2a2a36",
+    },
+    dividerText: {
+      color: "#a0a0b0",
+    },
+  },
+};
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,7 +63,14 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-fg">
-        {children}
+        <ClerkProvider
+          localization={frFR}
+          appearance={clerkAppearance}
+          signInFallbackRedirectUrl="/dashboard"
+          signUpFallbackRedirectUrl="/dashboard"
+        >
+          {children}
+        </ClerkProvider>
       </body>
     </html>
   );
