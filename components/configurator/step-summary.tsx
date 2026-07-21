@@ -6,11 +6,22 @@ type StepSummaryProps = {
   onEdit: (stepIndex: number) => void;
 };
 
+type SummarySection =
+  | { kind: "text"; title: string; stepIndex: number; content: string }
+  | { kind: "colors"; title: string; stepIndex: number };
+
 export function StepSummary({ answers, onEdit }: StepSummaryProps) {
-  const sections = [
-    { title: "Cible", stepIndex: 0, content: answers.target },
-    { title: "Nom de chaîne", stepIndex: 1, content: answers.channelName },
+  const sections: SummarySection[] = [
+    { kind: "text", title: "Cible", stepIndex: 0, content: answers.target },
     {
+      kind: "text",
+      title: "Nom de chaîne",
+      stepIndex: 1,
+      content: answers.channelName,
+    },
+    { kind: "colors", title: "Couleurs", stepIndex: 2 },
+    {
+      kind: "text",
       title: "Avatar",
       stepIndex: 3,
       content: [answers.avatar.description, answers.avatar.styles.join(", ")]
@@ -18,6 +29,7 @@ export function StepSummary({ answers, onEdit }: StepSummaryProps) {
         .join(" — "),
     },
     {
+      kind: "text",
       title: "Bannière",
       stepIndex: 4,
       content: [answers.banner.description, answers.banner.styles.join(", ")]
@@ -28,39 +40,47 @@ export function StepSummary({ answers, onEdit }: StepSummaryProps) {
 
   return (
     <div className="flex flex-col gap-4">
-      {sections.slice(0, 2).map((section) => (
-        <SummaryCard key={section.title} {...section} onEdit={onEdit} />
-      ))}
-
-      <Card>
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex flex-col gap-2">
-            <p className="text-sm font-semibold text-fg">Couleurs</p>
-            <div className="flex items-center gap-3">
-              <div className="flex h-7 w-28 overflow-hidden rounded-md border border-border">
-                <span
-                  className="flex-1"
-                  style={{ backgroundColor: answers.colors.primary }}
-                />
-                <span
-                  className="flex-1"
-                  style={{ backgroundColor: answers.colors.secondary }}
-                />
+      {sections.map((section) =>
+        section.kind === "colors" ? (
+          <Card key={section.title}>
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex flex-col gap-2">
+                <p className="text-sm font-semibold text-fg">{section.title}</p>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-7 w-28 overflow-hidden rounded-md border border-border">
+                    <span
+                      className="flex-1"
+                      style={{ backgroundColor: answers.colors.primary }}
+                    />
+                    <span
+                      className="flex-1"
+                      style={{ backgroundColor: answers.colors.secondary }}
+                    />
+                  </div>
+                  <span className="font-mono text-xs text-fg-muted">
+                    {answers.colors.primary} · {answers.colors.secondary}
+                  </span>
+                </div>
               </div>
-              <span className="font-mono text-xs text-fg-muted">
-                {answers.colors.primary} · {answers.colors.secondary}
-              </span>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => onEdit(section.stepIndex)}
+              >
+                Modifier
+              </Button>
             </div>
-          </div>
-          <Button size="sm" variant="ghost" onClick={() => onEdit(2)}>
-            Modifier
-          </Button>
-        </div>
-      </Card>
-
-      {sections.slice(2).map((section) => (
-        <SummaryCard key={section.title} {...section} onEdit={onEdit} />
-      ))}
+          </Card>
+        ) : (
+          <SummaryCard
+            key={section.title}
+            title={section.title}
+            content={section.content}
+            stepIndex={section.stepIndex}
+            onEdit={onEdit}
+          />
+        ),
+      )}
 
       <div className="mt-2 flex flex-col items-center gap-2 rounded-lg border border-border bg-surface p-6 text-center">
         <Button variant="cta" disabled>

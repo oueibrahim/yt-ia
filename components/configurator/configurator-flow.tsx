@@ -55,9 +55,29 @@ const stepDescriptions = [
 export function ConfiguratorFlow() {
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<ConfiguratorAnswers>(initialAnswers);
+  const [editingFromSummary, setEditingFromSummary] = useState(false);
 
   const isSummary = currentStep === summaryStep;
   const canGoNext = isStepValid(currentStep, answers);
+
+  function editStep(stepIndex: number) {
+    setEditingFromSummary(true);
+    setCurrentStep(stepIndex);
+  }
+
+  function goPrevious() {
+    setEditingFromSummary(false);
+    setCurrentStep((step) => step - 1);
+  }
+
+  function goNext() {
+    if (editingFromSummary) {
+      setEditingFromSummary(false);
+      setCurrentStep(summaryStep);
+    } else {
+      setCurrentStep((step) => step + 1);
+    }
+  }
 
   function update<K extends keyof ConfiguratorAnswers>(
     key: K,
@@ -126,25 +146,22 @@ export function ConfiguratorFlow() {
             onChange={(value) => update("banner", value)}
           />
         )}
-        {isSummary && (
-          <StepSummary answers={answers} onEdit={setCurrentStep} />
-        )}
+        {isSummary && <StepSummary answers={answers} onEdit={editStep} />}
       </div>
 
       {!isSummary && (
         <footer className="flex items-center justify-between border-t border-border pt-4">
           <Button
             variant="secondary"
-            onClick={() => setCurrentStep((step) => step - 1)}
+            onClick={goPrevious}
             disabled={currentStep === 0}
           >
             Précédent
           </Button>
-          <Button
-            onClick={() => setCurrentStep((step) => step + 1)}
-            disabled={!canGoNext}
-          >
-            {currentStep === summaryStep - 1 ? "Voir le récapitulatif" : "Suivant"}
+          <Button onClick={goNext} disabled={!canGoNext}>
+            {editingFromSummary || currentStep === summaryStep - 1
+              ? "Voir le récapitulatif"
+              : "Suivant"}
           </Button>
         </footer>
       )}
