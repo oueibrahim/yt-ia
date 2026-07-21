@@ -19,7 +19,7 @@ type ChatViewProps = {
 };
 
 export function ChatView({ quotaFull = false }: ChatViewProps) {
-  const [activeId, setActiveId] = useState(mockConversations[0].id);
+  const [activeId, setActiveId] = useState(mockConversations[0]?.id ?? "");
   const [mobileShowList, setMobileShowList] = useState(false);
 
   const quotaUsed = quotaFull
@@ -93,7 +93,7 @@ export function ChatView({ quotaFull = false }: ChatViewProps) {
             used={quotaUsed}
             limit={mockFormation.monthlyMessageQuota}
           />
-          <ChatInput disabled={isQuotaFull} />
+          <ChatInput key={activeId} disabled={isQuotaFull} />
         </footer>
       </section>
     </div>

@@ -3,7 +3,6 @@ import { Badge, Button, Card } from "@/components/ui";
 import { mockConversations, mockMessages } from "@/lib/mock/data";
 import type { Message } from "@/lib/mock/types";
 
-const REFERENCE_NOW = new Date("2026-07-21T12:00:00Z");
 const DAY_MS = 1000 * 60 * 60 * 24;
 
 type HistoryGroup = {
@@ -12,14 +11,14 @@ type HistoryGroup = {
 };
 
 function groupByDate(productions: Message[]): HistoryGroup[] {
+  const now = new Date();
   const today: Message[] = [];
   const thisWeek: Message[] = [];
   const older: Message[] = [];
 
   for (const production of productions) {
     const ageDays =
-      (REFERENCE_NOW.getTime() - new Date(production.createdAt).getTime()) /
-      DAY_MS;
+      (now.getTime() - new Date(production.createdAt).getTime()) / DAY_MS;
     if (ageDays < 1) today.push(production);
     else if (ageDays < 7) thisWeek.push(production);
     else older.push(production);
