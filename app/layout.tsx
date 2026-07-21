@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import { frFR } from "@clerk/localizations";
-import { dark } from "@clerk/themes";
+import { dark } from "@clerk/ui/themes";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -9,11 +9,12 @@ const clerkAppearance = {
   baseTheme: dark,
   variables: {
     colorPrimary: "#ff4d2e",
+    colorPrimaryForeground: "#ffffff",
     colorBackground: "#15151c",
-    colorInputBackground: "#0b0b0f",
-    colorInputText: "#f5f5f7",
-    colorText: "#f5f5f7",
-    colorTextSecondary: "#a0a0b0",
+    colorInput: "#0b0b0f",
+    colorInputForeground: "#f5f5f7",
+    colorForeground: "#f5f5f7",
+    colorMutedForeground: "#a0a0b0",
     colorDanger: "#f87171",
     borderRadius: "10px",
   },
