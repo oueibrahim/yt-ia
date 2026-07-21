@@ -1,4 +1,5 @@
 import type {
+  AdminStudentRow,
   Conversation,
   Formation,
   License,
@@ -120,6 +121,63 @@ ERREUR TROIS — Tu ne touches jamais ta poitrine : amplitude coupée, résultat
 CTA
 Abonne-toi, la suite arrive demain.`,
     createdAt: "2026-07-15T18:41:10Z",
+  },
+];
+
+export const mockAdminStudents: AdminStudentRow[] = [
+  {
+    id: "adm-01",
+    name: "Ibrahim K.",
+    email: "eleve@exemple.com",
+    status: "active",
+    configuratorStep: "Terminé",
+    lastActivity: "2026-07-21T09:12:00Z",
+    messagesUsed: 128,
+  },
+  {
+    id: "adm-02",
+    name: "Sarah M.",
+    email: "sarah.m@exemple.com",
+    status: "active",
+    configuratorStep: "Couleurs (3/5)",
+    lastActivity: "2026-07-20T16:30:00Z",
+    messagesUsed: 42,
+  },
+  {
+    id: "adm-03",
+    name: "Yann D.",
+    email: "yann.d@exemple.com",
+    status: "pending_license",
+    configuratorStep: "Non commencé",
+    lastActivity: "2026-07-19T11:05:00Z",
+    messagesUsed: 0,
+  },
+  {
+    id: "adm-04",
+    name: "Aminata S.",
+    email: "aminata.s@exemple.com",
+    status: "expired",
+    configuratorStep: "Terminé",
+    lastActivity: "2026-06-28T14:20:00Z",
+    messagesUsed: 187,
+  },
+  {
+    id: "adm-05",
+    name: "Kevin T.",
+    email: "kevin.t@exemple.com",
+    status: "suspended",
+    configuratorStep: "Avatar (4/5)",
+    lastActivity: "2026-07-10T08:45:00Z",
+    messagesUsed: 199,
+  },
+  {
+    id: "adm-06",
+    name: "Léa B.",
+    email: "lea.b@exemple.com",
+    status: "active",
+    configuratorStep: "Cible (1/5)",
+    lastActivity: "2026-07-21T07:55:00Z",
+    messagesUsed: 3,
   },
 ];
 
