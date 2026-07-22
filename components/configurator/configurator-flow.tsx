@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Alert, Button, StepIndicator } from "@/components/ui";
 import type {
   ConfiguratorAnswers,
@@ -11,6 +11,8 @@ import type {
 } from "@/lib/configurator-types";
 import {
   completeConfiguration,
+  getAssistantStatus,
+  requestAssistantGeneration,
   saveAvatar,
   saveBanner,
   saveChannelName,
@@ -19,6 +21,7 @@ import {
   suggestChannelNames,
   suggestPalette,
 } from "@/app/(app)/configurateur/actions";
+import type { AssistantInfo } from "./step-summary";
 import { StepTarget, type TargetDraft } from "./step-target";
 import { StepChannelName } from "./step-channel-name";
 import { StepColors } from "./step-colors";
@@ -44,6 +47,7 @@ type ConfiguratorFlowProps = {
   initialAnswers: ConfiguratorAnswers;
   initialStep: string;
   initialCompleted: boolean;
+  initialAssistant: AssistantInfo | null;
   niche: ConfiguratorNicheContent;
 };
 
@@ -58,6 +62,7 @@ export function ConfiguratorFlow({
   initialAnswers,
   initialStep,
   initialCompleted,
+  initialAssistant,
   niche,
 }: ConfiguratorFlowProps) {
   const [answers, setAnswers] = useState<ConfiguratorAnswers>(initialAnswers);
@@ -69,6 +74,12 @@ export function ConfiguratorFlow({
   const [saving, setSaving] = useState(false);
   const [completing, setCompleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [assistant, setAssistant] = useState<AssistantInfo | null>(
+    initialAssistant,
+  );
+  const [generating, setGenerating] = useState(false);
+  // Version present before a (re)generation started — used to detect the new one
+  const baselineVersionRef = useRef<number | null>(initialAssistant?.version ?? null);
 
   // Per-step drafts, hydrated from saved answers
   const [targetDraft, setTargetDraft] = useState<TargetDraft>({
@@ -236,6 +247,31 @@ export function ConfiguratorFlow({
     }
   }
 
+  async function handleGenerate() {
+    setError(null);
+    const result = await requestAssistantGeneration();
+    if (!result.ok) return setError(result.error);
+    baselineVersionRef.current = assistant?.version ?? null;
+    setGenerating(true);
+  }
+
+  // Poll every 5s while a generation is running; the presence of a NEW
+  // active prompt_b version (vs the baseline) is the source of truth.
+  useEffect(() => {
+    if (!generating) return;
+    const interval = setInterval(async () => {
+      const result = await getAssistantStatus();
+      if (!result.ok || !result.data.ready) return;
+      if (result.data.version === baselineVersionRef.current) return;
+      setAssistant({
+        version: result.data.version ?? 0,
+        name: result.data.assistantName,
+      });
+      setGenerating(false);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [generating]);
+
   async function handleComplete() {
     setError(null);
     setCompleting(true);
@@ -341,11 +377,14 @@ export function ConfiguratorFlow({
             answers={answers}
             completed={completed}
             completing={completing}
+            assistant={assistant}
+            generating={generating}
             onEdit={(stepIndex) => {
               setEditingFromSummary(true);
               setCurrentStep(stepIndex);
             }}
             onComplete={handleComplete}
+            onGenerate={handleGenerate}
           />
         )}
       </div>

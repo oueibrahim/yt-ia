@@ -1,8 +1,10 @@
 import { redirect } from "next/navigation";
 import { currentUser } from "@clerk/nextjs/server";
 import { ConfiguratorFlow } from "@/components/configurator/configurator-flow";
+import { extractAssistantName } from "@/lib/assistant-name";
 import { getAnswers, getLatestSession } from "@/lib/db/configurator";
 import { getNicheForStudent } from "@/lib/db/niches";
+import { getActivePromptB } from "@/lib/db/prompt-b";
 import { getStudentByClerkId } from "@/lib/db/students";
 import type {
   ConfiguratorAnswers,
@@ -16,9 +18,10 @@ export default async function ConfiguratorPage() {
   const student = await getStudentByClerkId(user.id);
   if (!student) redirect("/sign-in");
 
-  const [session, niche] = await Promise.all([
+  const [session, niche, activePromptB] = await Promise.all([
     getLatestSession(student.id),
     getNicheForStudent(student.id),
+    getActivePromptB(student.id),
   ]);
   const answers = session
     ? ((await getAnswers(session.id)) as ConfiguratorAnswers)
@@ -36,6 +39,14 @@ export default async function ConfiguratorPage() {
       initialAnswers={answers}
       initialStep={session?.current_step ?? "target"}
       initialCompleted={session?.status === "completed"}
+      initialAssistant={
+        activePromptB
+          ? {
+              version: activePromptB.version,
+              name: extractAssistantName(activePromptB.content),
+            }
+          : null
+      }
       niche={nicheContent}
     />
   );
