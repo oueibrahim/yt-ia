@@ -4,7 +4,8 @@ import { generateText } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { recordUsageEvent, type UsageKind } from "@/lib/db/usage";
 
-const DEFAULT_MODEL = "gpt-5-mini";
+// gpt-5-* requires OpenAI organization verification; keep an unrestricted default
+const DEFAULT_MODEL = "gpt-4.1-mini";
 
 export function getModelId(): string {
   return process.env.OPENAI_MODEL ?? DEFAULT_MODEL;
@@ -25,12 +26,15 @@ export async function generateCompletion(params: {
     prompt: params.prompt,
   });
 
-  await recordUsageEvent({
+  // Best-effort: a logging failure must never discard the generated content
+  recordUsageEvent({
     studentId: params.studentId,
     kind: params.kind,
     model: modelId,
     tokensIn: usage.inputTokens ?? 0,
     tokensOut: usage.outputTokens ?? 0,
+  }).catch((error) => {
+    console.error("[usage] recordUsageEvent failed:", error);
   });
 
   return text;

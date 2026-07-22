@@ -16,7 +16,12 @@ import {
 // Minimal .env.local loader (no dotenv dependency)
 for (const line of readFileSync(".env.local", "utf8").split(/\r?\n/)) {
   const match = line.match(/^([A-Z0-9_]+)=(.*)$/);
-  if (match && !process.env[match[1]]) process.env[match[1]] = match[2];
+  if (match && !process.env[match[1]]) {
+    // Strip surrounding quotes and inline comments
+    process.env[match[1]] = match[2]
+      .replace(/^["']|["']$/g, "")
+      .replace(/\s+#.*$/, "");
+  }
 }
 
 // Mirrors the seeded Fitness niche (0002_seed_fitness.sql)
@@ -65,7 +70,7 @@ const sampleInputs = {
 };
 
 async function main() {
-  const modelId = process.env.OPENAI_MODEL ?? "gpt-5-mini";
+  const modelId = process.env.OPENAI_MODEL ?? "gpt-4.1-mini";
   console.log(`— Génération du Prompt B (modèle : ${modelId})…\n`);
 
   const { text, usage } = await generateText({
