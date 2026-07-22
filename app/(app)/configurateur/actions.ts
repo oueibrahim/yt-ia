@@ -1,7 +1,12 @@
 "use server";
 
 import { currentUser } from "@clerk/nextjs/server";
+import { tasks } from "@trigger.dev/sdk";
 import { z } from "zod";
+import type { generatePromptBTask } from "@/trigger/generate-prompt-b";
+import { extractAssistantName } from "@/lib/assistant-name";
+import { getActivePromptB } from "@/lib/db/prompt-b";
+import { getLatestSession } from "@/lib/db/configurator";
 import { generateCompletion, generateStructured } from "@/lib/ai/client";
 import {
   buildAvatarPromptsPrompts,
@@ -311,6 +316,55 @@ export async function saveBanner(raw: unknown): Promise<ActionResult<string>> {
     return { ok: true, data: imagePrompt };
   } catch (error) {
     console.error("saveBanner failed:", error);
+    return { ok: false, error: GENERIC_ERROR };
+  }
+}
+
+export type AssistantStatus = {
+  ready: boolean;
+  assistantName: string | null;
+  version: number | null;
+};
+
+// Triggers the async Prompt B generation (Trigger.dev job). Requires a
+// completed configurator session; the source of truth for completion of the
+// generation is the presence of an active prompt_b_versions row.
+export async function requestAssistantGeneration(): Promise<ActionResult<null>> {
+  try {
+    const student = await requireStudent();
+    const session = await getLatestSession(student.id);
+    if (!session || session.status !== "completed") {
+      return { ok: false, error: "Terminez d'abord la configuration." };
+    }
+    await tasks.trigger<typeof generatePromptBTask>("generate-prompt-b", {
+      studentId: student.id,
+    });
+    return { ok: true, data: null };
+  } catch (error) {
+    console.error("requestAssistantGeneration failed:", error);
+    return { ok: false, error: GENERIC_ERROR };
+  }
+}
+
+export async function getAssistantStatus(): Promise<
+  ActionResult<AssistantStatus>
+> {
+  try {
+    const student = await requireStudent();
+    const promptB = await getActivePromptB(student.id);
+    if (!promptB) {
+      return { ok: true, data: { ready: false, assistantName: null, version: null } };
+    }
+    return {
+      ok: true,
+      data: {
+        ready: true,
+        assistantName: extractAssistantName(promptB.content),
+        version: promptB.version,
+      },
+    };
+  } catch (error) {
+    console.error("getAssistantStatus failed:", error);
     return { ok: false, error: GENERIC_ERROR };
   }
 }

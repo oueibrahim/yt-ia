@@ -1,12 +1,23 @@
+"use client";
+
+import Link from "next/link";
 import { Alert, Button, Card } from "@/components/ui";
 import type { ConfiguratorAnswers } from "@/lib/configurator-types";
+
+export type AssistantInfo = {
+  version: number;
+  name: string | null;
+};
 
 type StepSummaryProps = {
   answers: ConfiguratorAnswers;
   completed: boolean;
   completing: boolean;
+  assistant: AssistantInfo | null;
+  generating: boolean;
   onEdit: (stepIndex: number) => void;
   onComplete: () => void;
+  onGenerate: () => void;
 };
 
 type SummarySection =
@@ -17,9 +28,23 @@ export function StepSummary({
   answers,
   completed,
   completing,
+  assistant,
+  generating,
   onEdit,
   onComplete,
+  onGenerate,
 }: StepSummaryProps) {
+  function handleGenerate() {
+    if (
+      assistant &&
+      !window.confirm(
+        "Régénérer votre assistant créera une nouvelle version (persona et tagline différentes). Continuer ?",
+      )
+    ) {
+      return;
+    }
+    onGenerate();
+  }
   const sections: SummarySection[] = [
     {
       kind: "text",
@@ -60,10 +85,10 @@ export function StepSummary({
 
   return (
     <div className="flex flex-col gap-4">
-      {completed && (
+      {completed && !assistant && !generating && (
         <Alert variant="success" title="Configuration terminée">
-          Vos réponses sont enregistrées. La génération de votre assistant
-          arrive très bientôt.
+          Vos réponses sont enregistrées. Vous pouvez maintenant générer votre
+          assistant personnalisé.
         </Alert>
       )}
 
@@ -119,23 +144,62 @@ export function StepSummary({
       )}
 
       <div className="mt-2 flex flex-col items-center gap-3 rounded-lg border border-border bg-surface p-6 text-center">
-        {!completed && (
-          <Button
-            variant="primary"
-            onClick={onComplete}
-            loading={completing}
-            disabled={completing}
-          >
-            Terminer la configuration
-          </Button>
+        {!completed ? (
+          <>
+            <Button
+              variant="primary"
+              onClick={onComplete}
+              loading={completing}
+              disabled={completing}
+            >
+              Terminer la configuration
+            </Button>
+            <Button variant="cta" disabled>
+              Générer mon assistant
+            </Button>
+            <p className="text-xs text-fg-subtle">
+              Terminez d&apos;abord la configuration — votre assistant sera
+              généré à partir de ces réponses.
+            </p>
+          </>
+        ) : generating ? (
+          <>
+            <Button variant="cta" loading disabled>
+              Génération en cours…
+            </Button>
+            <p className="text-xs text-fg-subtle">
+              Votre assistant est en cours de création, cela prend environ une
+              minute. Vous pouvez rester sur cette page.
+            </p>
+          </>
+        ) : assistant ? (
+          <>
+            <p className="text-lg font-semibold text-fg">
+              🎉 Votre assistant {assistant.name ?? "personnalisé"} est prêt
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <Link href="/chat">
+                <Button variant="cta">Ouvrir mon assistant</Button>
+              </Link>
+              <Button variant="secondary" onClick={handleGenerate}>
+                Régénérer mon assistant
+              </Button>
+            </div>
+            <p className="text-xs text-fg-subtle">
+              Version {assistant.version} — l&apos;espace de chat sera branché
+              très bientôt.
+            </p>
+          </>
+        ) : (
+          <>
+            <Button variant="cta" onClick={handleGenerate}>
+              Générer mon assistant
+            </Button>
+            <p className="text-xs text-fg-subtle">
+              Votre assistant personnalisé sera généré à partir de ces réponses.
+            </p>
+          </>
         )}
-        <Button variant="cta" disabled>
-          Générer mon assistant
-        </Button>
-        <p className="text-xs text-fg-subtle">
-          Dernière étape en cours de branchement — votre assistant sera généré à
-          partir de ces réponses.
-        </p>
       </div>
     </div>
   );
