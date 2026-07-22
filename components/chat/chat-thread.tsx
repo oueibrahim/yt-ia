@@ -25,7 +25,18 @@ export function ChatThread({
 }: ChatThreadProps) {
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
-  const isQuotaFull = quota.used >= quota.limit;
+  // Optimistic bump: quota.used only refreshes once router.refresh()
+  // completes after the full response streams in, which lags noticeably
+  // behind the user's action. Reset whenever the server value itself moves
+  // (adjusted during render, the React-endorsed alternative to an effect).
+  const [pendingUsage, setPendingUsage] = useState(0);
+  const [syncedUsed, setSyncedUsed] = useState(quota.used);
+  if (quota.used !== syncedUsed) {
+    setSyncedUsed(quota.used);
+    setPendingUsage(0);
+  }
+  const displayedUsed = quota.used + pendingUsage;
+  const isQuotaFull = displayedUsed >= quota.limit;
 
   const { messages, sendMessage, status } = useChat({
     id: conversationId,
@@ -41,6 +52,7 @@ export function ChatThread({
 
   function handleSend(text: string) {
     setServerError(null);
+    setPendingUsage((count) => count + 1);
     sendMessage({ text }, { body: { conversationId } });
   }
 
@@ -68,7 +80,7 @@ export function ChatThread({
             {serverError}
           </Alert>
         )}
-        <QuotaBanner used={quota.used} limit={quota.limit} />
+        <QuotaBanner used={displayedUsed} limit={quota.limit} />
         <ChatInput
           disabled={isBusy || isQuotaFull}
           onSend={handleSend}

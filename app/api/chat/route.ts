@@ -88,24 +88,35 @@ export async function POST(req: Request) {
     system,
     messages: await convertToModelMessages(messages),
     onFinish: async ({ text, usage }) => {
-      await saveMessagePair({
-        conversationId,
-        command,
-        userContent: userText,
-        assistantContent: text,
-        tokensIn: usage.inputTokens ?? 0,
-        tokensOut: usage.outputTokens ?? 0,
-      });
-      if (isFirstMessage) {
-        await renameConversation(conversationId, deriveConversationTitle(userText));
+      // The HTTP response is already streamed to the client by the time this
+      // runs — a thrown error here cannot reach the caller. Catch and log
+      // explicitly so a DB hiccup doesn't silently drop the persisted data.
+      try {
+        await saveMessagePair({
+          conversationId,
+          command,
+          userContent: userText,
+          assistantContent: text,
+          tokensIn: usage.inputTokens ?? 0,
+          tokensOut: usage.outputTokens ?? 0,
+        });
+        if (isFirstMessage) {
+          await renameConversation(
+            conversationId,
+            student.id,
+            deriveConversationTitle(userText),
+          );
+        }
+        await recordUsageEvent({
+          studentId: student.id,
+          kind: "chat",
+          model: modelId,
+          tokensIn: usage.inputTokens ?? 0,
+          tokensOut: usage.outputTokens ?? 0,
+        });
+      } catch (error) {
+        console.error("[chat] onFinish persistence failed:", error);
       }
-      await recordUsageEvent({
-        studentId: student.id,
-        kind: "chat",
-        model: modelId,
-        tokensIn: usage.inputTokens ?? 0,
-        tokensOut: usage.outputTokens ?? 0,
-      });
     },
   });
 

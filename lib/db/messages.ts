@@ -55,15 +55,19 @@ export async function createConversation(
   return data;
 }
 
+// Scoped to student_id as a self-contained safety net, even though every
+// current call site already verifies ownership via getOwnedConversation.
 export async function renameConversation(
   conversationId: string,
+  studentId: string,
   title: string,
 ): Promise<void> {
   const supabase = getSupabaseServer();
   const { error } = await supabase
     .from("conversations")
     .update({ title })
-    .eq("id", conversationId);
+    .eq("id", conversationId)
+    .eq("student_id", studentId);
   if (error) throw new Error(`renameConversation failed: ${error.message}`);
 }
 

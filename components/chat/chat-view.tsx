@@ -4,7 +4,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { UIMessage } from "ai";
 import { Alert, Button } from "@/components/ui";
-import { createConversationAction } from "@/app/(app)/chat/actions";
+import {
+  createConversationAction,
+  getConversationMessagesAction,
+} from "@/app/(app)/chat/actions";
 import type { ConversationRow } from "@/lib/db/types";
 import { ChatThread } from "./chat-thread";
 import { ConversationList } from "./conversation-list";
@@ -29,17 +32,45 @@ export function ChatView({
   studentActive,
 }: ChatViewProps) {
   const router = useRouter();
+  const [localConversations, setLocalConversations] = useState(conversations);
+  const [syncedConversations, setSyncedConversations] = useState(conversations);
   const [activeId, setActiveId] = useState(initialConversationId);
+  const [currentMessages, setCurrentMessages] = useState(initialMessages);
   const [mobileShowList, setMobileShowList] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [loadingMessages, setLoadingMessages] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const activeConversation = conversations.find((c) => c.id === activeId);
+  // Re-sync with the server list once a router.refresh() lands (e.g. after
+  // the first message renames the conversation) — local edits above always
+  // apply first so the UI never regresses to a stale server snapshot.
+  // Adjusting state during render (React-endorsed pattern) rather than in an
+  // effect, which would otherwise trigger a redundant extra render.
+  if (conversations !== syncedConversations) {
+    setSyncedConversations(conversations);
+    setLocalConversations(conversations);
+  }
 
-  function selectConversation(id: string) {
-    setActiveId(id);
+  const activeConversation = localConversations.find((c) => c.id === activeId);
+
+  // Messages are always fetched fresh for the selected conversation (never
+  // taken from a stale server-rendered prop of a different conversation).
+  async function selectConversation(id: string) {
     setMobileShowList(false);
-    router.replace(`/chat?conversation=${id}`);
+    setError(null);
+    setLoadingMessages(true);
+    try {
+      const result = await getConversationMessagesAction(id);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      setActiveId(id);
+      setCurrentMessages(result.data);
+      router.replace(`/chat?conversation=${id}`);
+    } finally {
+      setLoadingMessages(false);
+    }
   }
 
   async function handleCreate() {
@@ -47,8 +78,14 @@ export function ChatView({
     setCreating(true);
     try {
       const result = await createConversationAction();
-      if (!result.ok) return setError(result.error);
-      router.push(`/chat?conversation=${result.data.id}`);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      setLocalConversations((prev) => [result.data, ...prev]);
+      setActiveId(result.data.id);
+      setCurrentMessages([]);
+      router.replace(`/chat?conversation=${result.data.id}`);
       router.refresh();
     } finally {
       setCreating(false);
@@ -93,7 +130,7 @@ export function ChatView({
         }
       >
         <ConversationList
-          conversations={conversations}
+          conversations={localConversations}
           activeId={activeId}
           creating={creating}
           onSelect={selectConversation}
@@ -128,11 +165,15 @@ export function ChatView({
           </Alert>
         )}
 
-        {activeConversation ? (
+        {loadingMessages ? (
+          <div className="flex flex-1 items-center justify-center">
+            <p className="text-sm text-fg-subtle">Chargement…</p>
+          </div>
+        ) : activeConversation ? (
           <ChatThread
             key={activeConversation.id}
             conversationId={activeConversation.id}
-            initialMessages={initialMessages}
+            initialMessages={currentMessages}
             assistantName={assistantName ?? "Assistant"}
             quota={quota}
           />
