@@ -1,26 +1,10 @@
 import { Badge, Button, Card } from "@/components/ui";
+import { statusBadgeVariants, statusLabels } from "@/lib/db/status";
 import type { AdminStudentRow, StudentStatus } from "@/lib/mock/types";
 
 type StudentsTableProps = {
   students: AdminStudentRow[];
   monthlyQuota: number;
-};
-
-const statusLabels: Record<StudentStatus, string> = {
-  active: "Actif",
-  pending_license: "En attente",
-  expired: "Expiré",
-  suspended: "Suspendu",
-};
-
-const statusBadgeVariants: Record<
-  StudentStatus,
-  "active" | "pending" | "expired" | "suspended"
-> = {
-  active: "active",
-  pending_license: "pending",
-  expired: "expired",
-  suspended: "suspended",
 };
 
 const dateFormatter = new Intl.DateTimeFormat("fr-FR", {
