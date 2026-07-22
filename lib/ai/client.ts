@@ -1,7 +1,8 @@
 import "server-only";
 
-import { generateText } from "ai";
+import { generateObject, generateText } from "ai";
 import { openai } from "@ai-sdk/openai";
+import type { z } from "zod";
 import { recordUsageEvent, type UsageKind } from "@/lib/db/usage";
 
 // gpt-5-* requires OpenAI organization verification; keep an unrestricted default
@@ -38,4 +39,33 @@ export async function generateCompletion(params: {
   });
 
   return text;
+}
+
+// Structured variant (JSON constrained by a zod schema) — same usage logging.
+export async function generateStructured<T>(params: {
+  system: string;
+  prompt: string;
+  schema: z.ZodType<T>;
+  studentId: string;
+  kind: UsageKind;
+}): Promise<T> {
+  const modelId = getModelId();
+  const { object, usage } = await generateObject({
+    model: openai(modelId),
+    system: params.system,
+    prompt: params.prompt,
+    schema: params.schema,
+  });
+
+  recordUsageEvent({
+    studentId: params.studentId,
+    kind: params.kind,
+    model: modelId,
+    tokensIn: usage.inputTokens ?? 0,
+    tokensOut: usage.outputTokens ?? 0,
+  }).catch((error) => {
+    console.error("[usage] recordUsageEvent failed:", error);
+  });
+
+  return object;
 }
