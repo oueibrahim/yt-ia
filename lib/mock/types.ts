@@ -22,23 +22,6 @@ export type Student = {
   status: StudentStatus;
 };
 
-export type CommandKind = "script" | "short";
-
-export type Conversation = {
-  id: string;
-  title: string;
-  createdAt: string;
-};
-
-export type Message = {
-  id: string;
-  conversationId: string;
-  role: "user" | "assistant";
-  command: CommandKind | null;
-  content: string;
-  createdAt: string;
-};
-
 export type AdminStudentRow = {
   id: string;
   name: string;

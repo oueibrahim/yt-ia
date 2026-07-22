@@ -1,28 +1,31 @@
 import { Badge } from "@/components/ui";
 import { cn } from "@/lib/utils";
-import type { Message } from "@/lib/mock/types";
+import { detectCommand } from "@/lib/chat-command";
+import type { UIMessage } from "ai";
 
 type MessageBubbleProps = {
-  message: Message;
+  message: UIMessage;
   assistantName: string;
 };
 
+function textOf(message: UIMessage): string {
+  return message.parts
+    .filter((part): part is { type: "text"; text: string } => part.type === "text")
+    .map((part) => part.text)
+    .join("");
+}
+
 export function MessageBubble({ message, assistantName }: MessageBubbleProps) {
   const isUser = message.role === "user";
+  const content = textOf(message);
+  const command = isUser ? detectCommand(content) : null;
 
   return (
     <div className={cn("flex flex-col gap-1", isUser && "items-end")}>
       {!isUser && (
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-accent">
-            {assistantName}
-          </span>
-          {message.command && (
-            <Badge variant={message.command === "short" ? "active" : "neutral"}>
-              /{message.command}
-            </Badge>
-          )}
-        </div>
+        <span className="text-xs font-semibold text-accent">
+          {assistantName}
+        </span>
       )}
       <div
         className={cn(
@@ -32,7 +35,12 @@ export function MessageBubble({ message, assistantName }: MessageBubbleProps) {
             : "border border-border bg-surface text-fg-muted",
         )}
       >
-        {message.content}
+        {isUser && command && (
+          <Badge variant={command === "short" ? "active" : "neutral"} className="mb-1.5">
+            /{command}
+          </Badge>
+        )}
+        {content}
       </div>
     </div>
   );
