@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { Alert, Button, Card } from "@/components/ui";
 import type { ConfiguratorAnswers } from "@/lib/configurator-types";

@@ -257,9 +257,19 @@ export function ConfiguratorFlow({
 
   // Poll every 5s while a generation is running; the presence of a NEW
   // active prompt_b version (vs the baseline) is the source of truth.
+  // Hard timeout so a failed job never locks the UI in the spinner.
   useEffect(() => {
     if (!generating) return;
+    const startedAt = Date.now();
+    const MAX_WAIT_MS = 4 * 60 * 1000;
     const interval = setInterval(async () => {
+      if (Date.now() - startedAt > MAX_WAIT_MS) {
+        setGenerating(false);
+        setError(
+          "La génération a échoué ou pris trop de temps. Cliquez à nouveau sur « Générer mon assistant » pour réessayer.",
+        );
+        return;
+      }
       const result = await getAssistantStatus();
       if (!result.ok || !result.data.ready) return;
       if (result.data.version === baselineVersionRef.current) return;
