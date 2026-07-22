@@ -249,10 +249,16 @@ export function ConfiguratorFlow({
 
   async function handleGenerate() {
     setError(null);
-    const result = await requestAssistantGeneration();
-    if (!result.ok) return setError(result.error);
-    baselineVersionRef.current = assistant?.version ?? null;
+    // Set before the await: guards against a double-click firing two
+    // parallel Trigger.dev jobs (and two prompt_b_versions rows) during
+    // the network round-trip.
     setGenerating(true);
+    baselineVersionRef.current = assistant?.version ?? null;
+    const result = await requestAssistantGeneration();
+    if (!result.ok) {
+      setGenerating(false);
+      setError(result.error);
+    }
   }
 
   // Poll every 5s while a generation is running; the presence of a NEW
