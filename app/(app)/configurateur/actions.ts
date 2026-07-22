@@ -14,10 +14,10 @@ import {
   completeSession,
   getAnswers,
   getOrCreateSession,
+  upsertAnswer,
 } from "@/lib/db/configurator";
 import { getNicheForStudent } from "@/lib/db/niches";
 import { getStudentByClerkId } from "@/lib/db/students";
-import { upsertAnswer } from "@/lib/db/configurator";
 import type {
   AvatarAnswer,
   BannerAnswer,

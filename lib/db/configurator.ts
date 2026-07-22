@@ -84,11 +84,17 @@ export async function upsertAnswer(params: {
   );
   if (error) throw new Error(`upsertAnswer failed: ${error.message}`);
 
+  // Best-effort step pointer, and only while the session is in progress:
+  // an edit from the summary of a completed session must not corrupt it,
+  // and a pointer failure must not surface an error for a saved answer.
   const { error: stepError } = await supabase
     .from("configurator_sessions")
     .update({ current_step: params.nextStep })
-    .eq("id", params.sessionId);
-  if (stepError) throw new Error(`upsertAnswer failed: ${stepError.message}`);
+    .eq("id", params.sessionId)
+    .eq("status", "in_progress");
+  if (stepError) {
+    console.error(`upsertAnswer: current_step update failed: ${stepError.message}`);
+  }
 }
 
 export async function completeSession(sessionId: string): Promise<void> {
