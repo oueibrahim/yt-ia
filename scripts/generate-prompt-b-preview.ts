@@ -70,7 +70,7 @@ const sampleInputs = {
 };
 
 async function main() {
-  const modelId = process.env.OPENAI_MODEL ?? "gpt-4.1-mini";
+  const modelId = process.env.OPENAI_MODEL ?? "gpt-5-mini";
   console.log(`— Génération du Prompt B (modèle : ${modelId})…\n`);
 
   const { text, usage } = await generateText({
