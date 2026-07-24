@@ -112,7 +112,7 @@ Référence de terrain : `docs/reference/prompt-a-chainfit.md` (le Prompt A rée
 - Tout tunnel de paiement (Chariow s'en charge)
 
 ### V2 (après validation du MVP)
-Édition guidée + libre du Prompt B avec rollback de version · toutes les niches + back office niches · API image OpenAI intégrée · dashboard de consommation détaillé · ensemble complet des commandes · rappels d'expiration de licence automatisés.
+Édition guidée + libre du Prompt B avec rollback de version · toutes les niches + back office niches · API image OpenAI intégrée · dashboard de consommation détaillé · ensemble complet des commandes · rappels d'expiration de licence automatisés · `/script` et `/short` : laisser l'élève préciser/choisir la durée souhaitée de la vidéo (retour terrain du 23/07/2026 — le renforcement des consignes de longueur en V1 fixe une cible par défaut, mais un contrôle explicite par l'élève serait plus flexible).
 
 ## 6. Risques et parades (intégrées à l'architecture)
 
