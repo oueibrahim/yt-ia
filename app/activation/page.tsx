@@ -1,15 +1,28 @@
 import { redirect } from "next/navigation";
+import { currentUser } from "@clerk/nextjs/server";
+import { Alert } from "@/components/ui";
 import { ActivationForm } from "@/components/activation/activation-form";
+import { PurchasePlans } from "@/components/activation/purchase-plans";
 import { getActiveLicense } from "@/lib/db/licenses";
 import { ensureStudent } from "@/lib/db/students";
 
-export default async function ActivationPage() {
+export default async function ActivationPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ checkout?: string }>;
+}) {
   const student = await ensureStudent();
   if (!student) redirect("/sign-in");
 
   // Already has a valid license — skip straight to the app.
   const activeLicense = await getActiveLicense(student.id);
   if (activeLicense) redirect("/dashboard");
+
+  const user = await currentUser();
+  // Purely cosmetic flag: forging ?checkout=success just shows an unearned
+  // confirmation banner and hides the purchase section — it grants no
+  // access and crosses no security boundary. Accepted as-is for V1.
+  const checkoutSuccess = (await searchParams).checkout === "success";
 
   return (
     <main className="flex min-h-dvh items-center justify-center px-4 py-8">
@@ -20,10 +33,25 @@ export default async function ActivationPage() {
           </p>
           <h1 className="mt-4 text-2xl font-bold">Activez votre licence</h1>
           <p className="mt-2 text-sm text-fg-muted">
-            Entrez la clé de licence reçue après votre achat pour accéder à
-            votre espace.
+            Achetez un plan ou entrez la clé de licence reçue après votre
+            achat pour accéder à votre espace.
           </p>
         </header>
+
+        {checkoutSuccess && (
+          <Alert variant="success" title="Paiement reçu">
+            Votre clé de licence vous a été envoyée par e-mail. Collez-la
+            ci-dessous pour activer votre compte.
+          </Alert>
+        )}
+
+        {!checkoutSuccess && (
+          <PurchasePlans
+            email={student.email}
+            defaultFirstName={user?.firstName ?? ""}
+            defaultLastName={user?.lastName ?? ""}
+          />
+        )}
 
         <ActivationForm />
 

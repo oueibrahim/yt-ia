@@ -1,12 +1,15 @@
 "use server";
 
+import { redirect } from "next/navigation";
 import { currentUser } from "@clerk/nextjs/server";
 import { z } from "zod";
 import {
   activateLicense,
   ChariowError,
+  createCheckoutSession,
   getLicense,
 } from "@/lib/chariow/client";
+import { CHARIOW_PLANS, type PlanId } from "@/lib/chariow/plans";
 import {
   countRecentActivationAttempts,
   getLicenseByKey,
@@ -22,12 +25,37 @@ const GENERIC_ERROR = "Une erreur est survenue. Réessayez.";
 const MAX_ATTEMPTS = 5;
 const ATTEMPT_WINDOW_MINUTES = 10;
 
+// Fails loudly outside development instead of silently redirecting real
+// customers to localhost after payment if the env var is missing on deploy.
+function getAppUrl(): string {
+  const appUrl = process.env.APP_URL;
+  if (appUrl) return appUrl;
+  if (process.env.NODE_ENV !== "production") return "http://localhost:3000";
+  throw new Error("APP_URL is required in production");
+}
+
 const licenseKeySchema = z
   .string()
   .trim()
   .min(6, "Clé trop courte.")
   .max(48, "Clé trop longue.")
   .regex(/^[A-Za-z0-9-]+$/, "Format de clé invalide.");
+
+const purchaseFormSchema = z.object({
+  planId: z.enum(["30j", "90j"]),
+  firstName: z.string().trim().min(1, "Prénom requis.").max(50),
+  lastName: z.string().trim().min(1, "Nom requis.").max(50),
+  countryCode: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .regex(/^[A-Z]{2}$/, "Code pays invalide (ex. CI, FR, SN)."),
+  phoneNumber: z
+    .string()
+    .trim()
+    .regex(/^[0-9]{6,15}$/, "Numéro de téléphone invalide (chiffres uniquement)."),
+  discountCode: z.string().trim().max(50).optional(),
+});
 
 function statusMessage(status: string): string {
   switch (status) {
@@ -126,4 +154,72 @@ export async function activateLicenseAction(
     console.error("activateLicenseAction failed:", error);
     return { ok: false, error: GENERIC_ERROR };
   }
+}
+
+export async function createCheckoutSessionAction(
+  rawForm: {
+    planId: PlanId;
+    firstName: string;
+    lastName: string;
+    countryCode: string;
+    phoneNumber: string;
+    discountCode?: string;
+  },
+): Promise<ActionResult> {
+  const user = await currentUser();
+  if (!user) return { ok: false, error: GENERIC_ERROR };
+
+  const student = await ensureStudent();
+  if (!student) return { ok: false, error: GENERIC_ERROR };
+
+  const parsed = purchaseFormSchema.safeParse(rawForm);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? GENERIC_ERROR };
+  }
+
+  const plan = CHARIOW_PLANS.find((p) => p.id === parsed.data.planId);
+  if (!plan) return { ok: false, error: GENERIC_ERROR };
+
+  const email = user.emailAddresses[0]?.emailAddress;
+  if (!email) return { ok: false, error: GENERIC_ERROR };
+
+  const appUrl = getAppUrl();
+
+  let checkoutUrl: string | null = null;
+  try {
+    const session = await createCheckoutSession({
+      product_id: plan.productId,
+      email,
+      first_name: parsed.data.firstName,
+      last_name: parsed.data.lastName,
+      phone: {
+        number: parsed.data.phoneNumber,
+        country_code: parsed.data.countryCode,
+      },
+      custom_metadata: { student_id: student.id },
+      redirect_url: `${appUrl}/activation?checkout=success`,
+      discount_code: parsed.data.discountCode || undefined,
+    });
+
+    if (session.step === "already_purchased") {
+      return {
+        ok: false,
+        error: session.message ?? "Vous avez déjà acheté ce plan.",
+      };
+    }
+    if (session.step === "payment" && session.payment?.checkout_url) {
+      checkoutUrl = session.payment.checkout_url;
+    } else if (session.step === "completed") {
+      checkoutUrl = `${appUrl}/activation?checkout=success`;
+    } else {
+      return { ok: false, error: GENERIC_ERROR };
+    }
+  } catch (error) {
+    console.error("createCheckoutSessionAction failed:", error);
+    return { ok: false, error: GENERIC_ERROR };
+  }
+
+  // redirect() throws internally — must run outside the try/catch above so
+  // its control-flow signal isn't swallowed by our own error handling.
+  redirect(checkoutUrl);
 }

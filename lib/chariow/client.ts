@@ -39,10 +39,7 @@ function getApiKey(): string {
   return key;
 }
 
-async function chariowRequest(
-  path: string,
-  init?: RequestInit,
-): Promise<ChariowLicense> {
+async function chariowRequest<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${CHARIOW_BASE_URL}${path}`, {
     ...init,
     headers: {
@@ -66,12 +63,14 @@ async function chariowRequest(
     body && typeof body === "object" && "data" in body
       ? (body as Record<string, unknown>).data
       : body;
-  return data as ChariowLicense;
+  return data as T;
 }
 
 // Single entry point to the Chariow API (AGENTS.md §4).
 export async function getLicense(licenseKey: string): Promise<ChariowLicense> {
-  return chariowRequest(`/licenses/${encodeURIComponent(licenseKey)}`);
+  return chariowRequest<ChariowLicense>(
+    `/licenses/${encodeURIComponent(licenseKey)}`,
+  );
 }
 
 // Consumes one activation slot on the license (Chariow's device-activation
@@ -81,8 +80,35 @@ export async function activateLicense(
   licenseKey: string,
   deviceIdentifier: string,
 ): Promise<ChariowLicense> {
-  return chariowRequest(`/licenses/${encodeURIComponent(licenseKey)}/activate`, {
+  return chariowRequest<ChariowLicense>(
+    `/licenses/${encodeURIComponent(licenseKey)}/activate`,
+    { method: "POST", body: JSON.stringify({ device_identifier: deviceIdentifier }) },
+  );
+}
+
+export type ChariowCheckoutRequest = {
+  product_id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  phone: { number: string; country_code: string };
+  custom_metadata?: Record<string, string>;
+  redirect_url?: string;
+  discount_code?: string;
+};
+
+export type ChariowCheckoutResponse = {
+  step: "payment" | "completed" | "already_purchased";
+  message?: string;
+  purchase?: { id: string };
+  payment?: { checkout_url: string; transaction_id?: string };
+};
+
+export async function createCheckoutSession(
+  params: ChariowCheckoutRequest,
+): Promise<ChariowCheckoutResponse> {
+  return chariowRequest<ChariowCheckoutResponse>("/checkout", {
     method: "POST",
-    body: JSON.stringify({ device_identifier: deviceIdentifier }),
+    body: JSON.stringify(params),
   });
 }
