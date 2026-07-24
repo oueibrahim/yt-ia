@@ -94,6 +94,7 @@ export type ChariowCheckoutRequest = {
   phone: { number: string; country_code: string };
   custom_metadata?: Record<string, string>;
   redirect_url?: string;
+  discount_code?: string;
 };
 
 export type ChariowCheckoutResponse = {

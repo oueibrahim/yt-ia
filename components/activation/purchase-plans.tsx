@@ -22,6 +22,7 @@ export function PurchasePlans({
   const [lastName, setLastName] = useState(defaultLastName);
   const [countryCode, setCountryCode] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [discountCode, setDiscountCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -35,6 +36,7 @@ export function PurchasePlans({
         lastName,
         countryCode,
         phoneNumber,
+        discountCode: discountCode || undefined,
       });
       // On success, the server action redirects and never resolves here.
       if (!result.ok) setError(result.error);
@@ -121,6 +123,18 @@ export function PurchasePlans({
                     />
                   </Field>
                 </div>
+                <Field
+                  label="Code promo (optionnel)"
+                  htmlFor={`discount-${plan.id}`}
+                >
+                  <Input
+                    id={`discount-${plan.id}`}
+                    value={discountCode}
+                    onChange={(e) => setDiscountCode(e.target.value)}
+                    placeholder="Ex. TEST2026"
+                    disabled={isPending}
+                  />
+                </Field>
                 <Button
                   type="submit"
                   variant="cta"

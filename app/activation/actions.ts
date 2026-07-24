@@ -54,6 +54,7 @@ const purchaseFormSchema = z.object({
     .string()
     .trim()
     .regex(/^[0-9]{6,15}$/, "Numéro de téléphone invalide (chiffres uniquement)."),
+  discountCode: z.string().trim().max(50).optional(),
 });
 
 function statusMessage(status: string): string {
@@ -162,6 +163,7 @@ export async function createCheckoutSessionAction(
     lastName: string;
     countryCode: string;
     phoneNumber: string;
+    discountCode?: string;
   },
 ): Promise<ActionResult> {
   const user = await currentUser();
@@ -196,6 +198,7 @@ export async function createCheckoutSessionAction(
       },
       custom_metadata: { student_id: student.id },
       redirect_url: `${appUrl}/activation?checkout=success`,
+      discount_code: parsed.data.discountCode || undefined,
     });
 
     if (session.step === "already_purchased") {
