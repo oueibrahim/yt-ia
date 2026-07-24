@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Alert, Button, Card, Field, Input } from "@/components/ui";
+import { Alert, Button, Card, Field, Input, Select } from "@/components/ui";
 import { createCheckoutSessionAction } from "@/app/activation/actions";
+import { FRANCOPHONE_AFRICAN_COUNTRIES } from "@/lib/chariow/francophone-african-countries";
 import { CHARIOW_PLANS, type PlanId } from "@/lib/chariow/plans";
 
 type PurchasePlansProps = {
@@ -94,16 +95,21 @@ export function PurchasePlans({
                     />
                   </Field>
                 </div>
-                <div className="grid grid-cols-[80px_1fr] gap-2">
+                <div className="grid grid-cols-[minmax(0,1.2fr)_1fr] gap-2">
                   <Field label="Pays" htmlFor={`cc-${plan.id}`}>
-                    <Input
+                    <Select
                       id={`cc-${plan.id}`}
                       value={countryCode}
                       onChange={(e) => setCountryCode(e.target.value)}
-                      placeholder="CI"
-                      maxLength={2}
                       disabled={isPending}
-                    />
+                    >
+                      <option value="">Sélectionnez…</option>
+                      {FRANCOPHONE_AFRICAN_COUNTRIES.map((country) => (
+                        <option key={country.code} value={country.code}>
+                          {country.name}
+                        </option>
+                      ))}
+                    </Select>
                   </Field>
                   <Field label="Téléphone" htmlFor={`phone-${plan.id}`}>
                     <Input
