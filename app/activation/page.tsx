@@ -19,6 +19,9 @@ export default async function ActivationPage({
   if (activeLicense) redirect("/dashboard");
 
   const user = await currentUser();
+  // Purely cosmetic flag: forging ?checkout=success just shows an unearned
+  // confirmation banner and hides the purchase section — it grants no
+  // access and crosses no security boundary. Accepted as-is for V1.
   const checkoutSuccess = (await searchParams).checkout === "success";
 
   return (

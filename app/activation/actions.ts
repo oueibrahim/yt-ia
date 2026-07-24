@@ -25,6 +25,15 @@ const GENERIC_ERROR = "Une erreur est survenue. Réessayez.";
 const MAX_ATTEMPTS = 5;
 const ATTEMPT_WINDOW_MINUTES = 10;
 
+// Fails loudly outside development instead of silently redirecting real
+// customers to localhost after payment if the env var is missing on deploy.
+function getAppUrl(): string {
+  const appUrl = process.env.APP_URL;
+  if (appUrl) return appUrl;
+  if (process.env.NODE_ENV !== "production") return "http://localhost:3000";
+  throw new Error("APP_URL is required in production");
+}
+
 const licenseKeySchema = z
   .string()
   .trim()
@@ -172,7 +181,7 @@ export async function createCheckoutSessionAction(
   const email = user.emailAddresses[0]?.emailAddress;
   if (!email) return { ok: false, error: GENERIC_ERROR };
 
-  const appUrl = process.env.APP_URL ?? "http://localhost:3000";
+  const appUrl = getAppUrl();
 
   let checkoutUrl: string | null = null;
   try {

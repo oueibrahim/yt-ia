@@ -55,9 +55,10 @@ export function PurchasePlans({
             <Button
               variant={openPlanId === plan.id ? "secondary" : "primary"}
               size="sm"
-              onClick={() =>
-                setOpenPlanId(openPlanId === plan.id ? null : plan.id)
-              }
+              onClick={() => {
+                setOpenPlanId(openPlanId === plan.id ? null : plan.id);
+                setError(null);
+              }}
             >
               {openPlanId === plan.id ? "Annuler" : "Acheter"}
             </Button>
