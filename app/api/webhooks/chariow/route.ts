@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { getLicense } from "@/lib/chariow/client";
 import { getLicenseByKey, upsertLicenseFromChariow } from "@/lib/db/licenses";
@@ -16,14 +17,22 @@ type ChariowPulsePayload = {
   license?: { key?: string };
 };
 
-// Chariow documents no webhook signature. Mitigation: a shared secret in the
-// Pulse URL (checked first) PLUS — the real safeguard — the payload is never
-// trusted for state. It only tells us which license to re-check; the actual
-// status/expiry always comes from a fresh server-to-server getLicense() call.
+// Chariow documents no webhook signature, and its Pulse config (dashboard
+// and API alike, confirmed against the OpenAPI spec) only accepts a plain
+// URL — no custom headers, no signing secret. A query-string token is the
+// only mechanism available, hence it can land in server access logs; the
+// real safeguard is that the payload is never trusted for state. It only
+// tells us which license to re-check — the actual status/expiry always
+// comes from a fresh server-to-server getLicense() call below.
+function isValidToken(token: string | null): boolean {
+  const secret = process.env.CHARIOW_WEBHOOK_SECRET;
+  if (!secret || !token || token.length !== secret.length) return false;
+  return timingSafeEqual(Buffer.from(token), Buffer.from(secret));
+}
+
 export async function POST(req: Request) {
   const url = new URL(req.url);
-  const token = url.searchParams.get("token");
-  if (!token || token !== process.env.CHARIOW_WEBHOOK_SECRET) {
+  if (!isValidToken(url.searchParams.get("token"))) {
     return new Response("Unauthorized", { status: 401 });
   }
 

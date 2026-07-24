@@ -81,13 +81,16 @@ export async function activateLicenseAction(
   }
 
   try {
-    // Idempotent re-check for a key this same student already linked;
-    // otherwise this is a genuine first activation, which consumes one of
-    // Chariow's device-activation slots (our "device" = the student account).
-    const chariowLicense =
-      existing?.student_id === student.id
-        ? await getLicense(licenseKey)
-        : await activateLicense(licenseKey, student.id);
+    // Always read the current Chariow state first (free, no side effect).
+    // Only call the mutating activate endpoint when Chariow itself has never
+    // activated this key — never based on our own DB state. This way, a
+    // retry after our DB write failed (Chariow call already succeeded)
+    // re-reads status="active" and skips calling activate a second time,
+    // instead of silently consuming another device-activation slot.
+    let chariowLicense = await getLicense(licenseKey);
+    if (chariowLicense.status === "pending_activation") {
+      chariowLicense = await activateLicense(licenseKey, student.id);
+    }
 
     if (chariowLicense.status !== "active") {
       return { ok: false, error: statusMessage(chariowLicense.status) };
@@ -98,7 +101,21 @@ export async function activateLicenseAction(
       chariowPayload: chariowLicense,
       expiresAt: chariowLicense.expires_at,
     });
-    await linkLicenseToStudent({ licenseKey, studentId: student.id });
+
+    // Guarded write: only succeeds if the row is unlinked or already ours —
+    // closes the race where two students both pass the pre-check above with
+    // existing=null and both reach this point for the same key.
+    const linked = await linkLicenseToStudent({
+      licenseKey,
+      studentId: student.id,
+    });
+    if (!linked.ok) {
+      return {
+        ok: false,
+        error: "Cette clé de licence est déjà utilisée sur un autre compte.",
+      };
+    }
+
     await updateStudentStatus(student.id, "active");
 
     return { ok: true };

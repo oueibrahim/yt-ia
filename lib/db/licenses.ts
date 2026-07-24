@@ -64,16 +64,25 @@ export async function upsertLicenseFromChariow(params: {
   if (error) throw new Error(`upsertLicenseFromChariow failed: ${error.message}`);
 }
 
+// Guarded update: only succeeds if the row is currently unlinked or already
+// belongs to this student (studentId is always our own generated uuid, never
+// user input). Returns ok:false if a race was lost to another student.
 export async function linkLicenseToStudent(params: {
   licenseKey: string;
   studentId: string;
-}): Promise<void> {
+}): Promise<{ ok: boolean }> {
   const supabase = getSupabaseServer();
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("licenses")
-    .update({ student_id: params.studentId, activated_at: new Date().toISOString() })
-    .eq("license_key", params.licenseKey);
+    .update({
+      student_id: params.studentId,
+      activated_at: new Date().toISOString(),
+    })
+    .eq("license_key", params.licenseKey)
+    .or(`student_id.is.null,student_id.eq.${params.studentId}`)
+    .select("id");
   if (error) throw new Error(`linkLicenseToStudent failed: ${error.message}`);
+  return { ok: (data?.length ?? 0) > 0 };
 }
 
 export async function countRecentActivationAttempts(
