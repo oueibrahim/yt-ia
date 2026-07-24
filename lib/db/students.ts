@@ -3,7 +3,7 @@ import "server-only";
 import { cache } from "react";
 import { currentUser } from "@clerk/nextjs/server";
 import { getSupabaseServer } from "@/lib/supabase/server";
-import type { StudentRow } from "./types";
+import type { StudentRow, StudentStatus } from "./types";
 
 async function fetchStudentByClerkId(
   clerkUserId: string,
@@ -58,4 +58,16 @@ export async function ensureStudent(): Promise<StudentRow | null> {
     .single();
   if (error) throw new Error(`ensureStudent failed: ${error.message}`);
   return data;
+}
+
+export async function updateStudentStatus(
+  studentId: string,
+  status: StudentStatus,
+): Promise<void> {
+  const supabase = getSupabaseServer();
+  const { error } = await supabase
+    .from("students")
+    .update({ status })
+    .eq("id", studentId);
+  if (error) throw new Error(`updateStudentStatus failed: ${error.message}`);
 }

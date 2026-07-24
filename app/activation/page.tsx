@@ -1,21 +1,18 @@
-import { Alert, Button, Card, Field, Input } from "@/components/ui";
+import { redirect } from "next/navigation";
+import { ActivationForm } from "@/components/activation/activation-form";
+import { getActiveLicense } from "@/lib/db/licenses";
+import { ensureStudent } from "@/lib/db/students";
 
-type ActivationState = "default" | "error" | "success";
+export default async function ActivationPage() {
+  const student = await ensureStudent();
+  if (!student) redirect("/sign-in");
 
-function parseState(value: string | undefined): ActivationState {
-  if (value === "error" || value === "success") return value;
-  return "default";
-}
-
-export default async function ActivationPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ state?: string }>;
-}) {
-  const state = parseState((await searchParams).state);
+  // Already has a valid license — skip straight to the app.
+  const activeLicense = await getActiveLicense(student.id);
+  if (activeLicense) redirect("/dashboard");
 
   return (
-    <main className="flex min-h-dvh items-center justify-center px-4">
+    <main className="flex min-h-dvh items-center justify-center px-4 py-8">
       <div className="flex w-full max-w-md flex-col gap-6">
         <header className="text-center">
           <p className="text-lg font-bold">
@@ -28,40 +25,11 @@ export default async function ActivationPage({
           </p>
         </header>
 
-        <Card className="flex flex-col gap-4">
-          {state === "success" ? (
-            <Alert variant="success" title="Licence activée">
-              Votre accès est actif jusqu&apos;au 31 juillet 2026. Bienvenue !
-            </Alert>
-          ) : (
-            <>
-              <Field
-                label="Clé de licence"
-                htmlFor="license-key"
-                error={
-                  state === "error"
-                    ? "Cette clé de licence est invalide ou déjà utilisée."
-                    : undefined
-                }
-              >
-                <Input
-                  id="license-key"
-                  placeholder="Ex. FIT-2026-XXXX-XXXX"
-                  autoComplete="off"
-                />
-              </Field>
-              <Button variant="cta" className="w-full">
-                Activer ma licence
-              </Button>
-            </>
-          )}
-        </Card>
+        <ActivationForm />
 
         <p className="text-center text-sm text-fg-subtle">
-          Où trouver ma clé ?{" "}
-          <a href="#" className="text-accent hover:text-accent-hover">
-            Elle vous a été envoyée après votre achat.
-          </a>
+          Où trouver ma clé ? Elle vous a été envoyée par e-mail après votre
+          achat.
         </p>
       </div>
     </main>
