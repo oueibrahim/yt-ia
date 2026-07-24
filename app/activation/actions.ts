@@ -9,6 +9,7 @@ import {
   createCheckoutSession,
   getLicense,
 } from "@/lib/chariow/client";
+import { CHARIOW_PLANS, type PlanId } from "@/lib/chariow/plans";
 import {
   countRecentActivationAttempts,
   getLicenseByKey,
@@ -30,13 +31,6 @@ const licenseKeySchema = z
   .min(6, "Clé trop courte.")
   .max(48, "Clé trop longue.")
   .regex(/^[A-Za-z0-9-]+$/, "Format de clé invalide.");
-
-export const CHARIOW_PLANS = [
-  { id: "30j", productId: "prd_nby7ikmq", label: "1 mois", durationLabel: "30 jours" },
-  { id: "90j", productId: "prd_6bkc9wgw", label: "3 mois", durationLabel: "90 jours" },
-] as const;
-
-type PlanId = (typeof CHARIOW_PLANS)[number]["id"];
 
 const purchaseFormSchema = z.object({
   planId: z.enum(["30j", "90j"]),

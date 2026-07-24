@@ -2,12 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { Alert, Button, Card, Field, Input } from "@/components/ui";
-import {
-  CHARIOW_PLANS,
-  createCheckoutSessionAction,
-} from "@/app/activation/actions";
-
-type PlanId = (typeof CHARIOW_PLANS)[number]["id"];
+import { createCheckoutSessionAction } from "@/app/activation/actions";
+import { CHARIOW_PLANS, type PlanId } from "@/lib/chariow/plans";
 
 type PurchasePlansProps = {
   email: string;
