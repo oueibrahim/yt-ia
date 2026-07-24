@@ -5,8 +5,7 @@ import { openai } from "@ai-sdk/openai";
 import type { z } from "zod";
 import { recordUsageEvent, type UsageKind } from "@/lib/db/usage";
 
-// gpt-5-* requires OpenAI organization verification; keep an unrestricted default
-const DEFAULT_MODEL = "gpt-4.1-mini";
+const DEFAULT_MODEL = "gpt-5-mini";
 
 export function getModelId(): string {
   return process.env.OPENAI_MODEL ?? DEFAULT_MODEL;

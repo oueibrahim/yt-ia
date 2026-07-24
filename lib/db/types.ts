@@ -47,6 +47,26 @@ export type StudentRow = {
   created_at: string;
 };
 
+export type ConversationRow = {
+  id: string;
+  student_id: string;
+  title: string;
+  created_at: string;
+};
+
+export type MessageCommand = "script" | "short";
+
+export type MessageRow = {
+  id: string;
+  conversation_id: string;
+  role: "user" | "assistant";
+  command: MessageCommand | null;
+  content: string;
+  tokens_in: number;
+  tokens_out: number;
+  created_at: string;
+};
+
 export type LicenseRow = {
   id: string;
   license_key: string;

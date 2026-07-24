@@ -2,20 +2,33 @@
 
 import { useState } from "react";
 import { Button, Chip, Textarea } from "@/components/ui";
-import type { CommandKind } from "@/lib/mock/types";
+import type { MessageCommand } from "@/lib/chat-command";
 
-const commands: CommandKind[] = ["script", "short"];
+const commands: MessageCommand[] = ["script", "short"];
 
 type ChatInputProps = {
   disabled?: boolean;
+  placeholder?: string;
+  onSend: (text: string) => void;
 };
 
-export function ChatInput({ disabled = false }: ChatInputProps) {
+export function ChatInput({
+  disabled = false,
+  placeholder,
+  onSend,
+}: ChatInputProps) {
   const [value, setValue] = useState("");
 
-  function prefixCommand(command: CommandKind) {
-    const stripped = value.replace(/^\/(script|short)\s*/, "");
+  function prefixCommand(command: MessageCommand) {
+    const stripped = value.replace(/^\/(script|short)\s*/i, "");
     setValue(`/${command} ${stripped}`);
+  }
+
+  function handleSubmit() {
+    const trimmed = value.trim();
+    if (!trimmed || disabled) return;
+    onSend(trimmed);
+    setValue("");
   }
 
   return (
@@ -24,7 +37,7 @@ export function ChatInput({ disabled = false }: ChatInputProps) {
         {commands.map((command) => (
           <Chip
             key={command}
-            selected={value.startsWith(`/${command}`)}
+            selected={value.toLowerCase().startsWith(`/${command}`)}
             onSelect={() => prefixCommand(command)}
             className={disabled ? "pointer-events-none opacity-50" : undefined}
           >
@@ -36,23 +49,24 @@ export function ChatInput({ disabled = false }: ChatInputProps) {
         <Textarea
           value={value}
           onChange={(event) => setValue(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && !event.shiftKey) {
+              event.preventDefault();
+              handleSubmit();
+            }
+          }}
           placeholder={
-            disabled
-              ? "Quota atteint — revenez le mois prochain."
-              : "Ex. /script Le sujet de votre prochaine vidéo…"
+            placeholder ??
+            "Ex. /script Le sujet de votre prochaine vidéo…"
           }
           rows={2}
           disabled={disabled}
           className="min-h-14"
         />
-        <Button disabled title="Bientôt disponible">
+        <Button onClick={handleSubmit} disabled={disabled || value.trim().length === 0}>
           Envoyer
         </Button>
       </div>
-      <p className="text-xs text-fg-subtle">
-        L&apos;envoi sera disponible bientôt — votre assistant est en cours de
-        branchement.
-      </p>
     </div>
   );
 }

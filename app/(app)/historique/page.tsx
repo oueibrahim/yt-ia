@@ -1,24 +1,29 @@
+import { redirect } from "next/navigation";
 import Link from "next/link";
+import { currentUser } from "@clerk/nextjs/server";
 import { Badge, Button, Card } from "@/components/ui";
-import { mockConversations, mockMessages } from "@/lib/mock/data";
-import type { Message } from "@/lib/mock/types";
+import { getStudentProductions } from "@/lib/db/messages";
+import { getStudentByClerkId } from "@/lib/db/students";
+import type { MessageRow } from "@/lib/db/types";
 
 const DAY_MS = 1000 * 60 * 60 * 24;
 
+type Production = MessageRow & { conversation_title: string };
+
 type HistoryGroup = {
   label: string;
-  items: Message[];
+  items: Production[];
 };
 
-function groupByDate(productions: Message[]): HistoryGroup[] {
+function groupByDate(productions: Production[]): HistoryGroup[] {
   const now = new Date();
-  const today: Message[] = [];
-  const thisWeek: Message[] = [];
-  const older: Message[] = [];
+  const today: Production[] = [];
+  const thisWeek: Production[] = [];
+  const older: Production[] = [];
 
   for (const production of productions) {
     const ageDays =
-      (now.getTime() - new Date(production.createdAt).getTime()) / DAY_MS;
+      (now.getTime() - new Date(production.created_at).getTime()) / DAY_MS;
     if (ageDays < 1) today.push(production);
     else if (ageDays < 7) thisWeek.push(production);
     else older.push(production);
@@ -35,14 +40,14 @@ function excerpt(content: string): string {
   return content.split("\n").filter(Boolean).slice(0, 2).join(" — ");
 }
 
-export default function HistoryPage() {
-  const productions = mockMessages
-    .filter((message) => message.role === "assistant" && message.command)
-    .sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-    );
+export default async function HistoryPage() {
+  const user = await currentUser();
+  if (!user) redirect("/sign-in");
 
+  const student = await getStudentByClerkId(user.id);
+  if (!student) redirect("/sign-in");
+
+  const productions = await getStudentProductions(student.id);
   const groups = groupByDate(productions);
 
   return (
@@ -69,38 +74,33 @@ export default function HistoryPage() {
             <h2 className="text-sm font-semibold text-fg-subtle uppercase">
               {group.label}
             </h2>
-            {group.items.map((production) => {
-              const conversation = mockConversations.find(
-                (item) => item.id === production.conversationId,
-              );
-              return (
-                <Card key={production.id}>
-                  <div className="flex flex-col gap-2">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="truncate text-sm font-semibold text-fg">
-                        {conversation?.title ?? "Conversation"}
-                      </p>
-                      <Badge
-                        variant={
-                          production.command === "short" ? "active" : "neutral"
-                        }
-                      >
-                        /{production.command}
-                      </Badge>
-                    </div>
-                    <p className="line-clamp-2 text-sm text-fg-muted">
-                      {excerpt(production.content)}
+            {group.items.map((production) => (
+              <Card key={production.id}>
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="truncate text-sm font-semibold text-fg">
+                      {production.conversation_title}
                     </p>
-                    <Link
-                      href="/chat"
-                      className="text-sm font-medium text-accent hover:text-accent-hover"
+                    <Badge
+                      variant={
+                        production.command === "short" ? "active" : "neutral"
+                      }
                     >
-                      Ouvrir la conversation →
-                    </Link>
+                      /{production.command}
+                    </Badge>
                   </div>
-                </Card>
-              );
-            })}
+                  <p className="line-clamp-2 text-sm text-fg-muted">
+                    {excerpt(production.content)}
+                  </p>
+                  <Link
+                    href={`/chat?conversation=${production.conversation_id}`}
+                    className="text-sm font-medium text-accent hover:text-accent-hover"
+                  >
+                    Ouvrir la conversation →
+                  </Link>
+                </div>
+              </Card>
+            ))}
           </section>
         ))
       )}
