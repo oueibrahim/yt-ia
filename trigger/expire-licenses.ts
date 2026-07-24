@@ -24,12 +24,21 @@ export const expireLicenses = schedules.task({
       throw new Error(`expire-licenses: students query failed: ${activeError.message}`);
     }
 
+    // chariow_payload->>status also checked: a revoked license can keep its
+    // original future expires_at (revocation and expiry are independent
+    // dimensions in Chariow's model), so expires_at alone would miss it.
+    // Residual gap, accepted for V1: this only catches a revocation our own
+    // cache already knows about (written by the activation flow or a webhook
+    // that did land, even late within its ~27h retry window) — a revocation
+    // whose Pulse is missed entirely leaves no trace to check against short
+    // of polling Chariow's API per student, which isn't done here.
     const { data: validLicenses, error: licenseError } = await supabase
       .from("licenses")
       .select("student_id")
       .not("student_id", "is", null)
       .not("activated_at", "is", null)
-      .gt("expires_at", new Date().toISOString());
+      .gt("expires_at", new Date().toISOString())
+      .eq("chariow_payload->>status", "active");
     if (licenseError) {
       throw new Error(`expire-licenses: licenses query failed: ${licenseError.message}`);
     }
