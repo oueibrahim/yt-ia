@@ -20,8 +20,11 @@ export function ActivationForm() {
         setError(result.error);
         return;
       }
+      // push() alone already fetches fresh RSC data for the destination
+      // route; calling refresh() right after races with that navigation
+      // and can leave the UI stuck mid-transition (the request still
+      // completes server-side, which is why it showed up in the logs).
       router.push("/dashboard");
-      router.refresh();
     });
   }
 
